@@ -15,10 +15,11 @@ internal class FilterModuleTest {
     }
 
     private fun mapper() : ObjectMapper {
+        val lookup = mapOf(
+            FilterConfig.ClassProperty(Quote::class.java,"id") to FilterConfig.PropertyAuthorization("Quote", "id"),
+            FilterConfig.ClassProperty(Author::class.java,"id") to FilterConfig.PropertyAuthorization("Author", "id")
+        )
         return ObjectMapper().registerKotlinModule()
-            .registerModule(FilterModule(FilterConfig(setOf())))
+            .registerModule(FilterModule(FilterConfig(true, lookup), TestFilterSupplier()))
     }
-
-    private data class Quote(val id: Int, val author: Author, val quote: String)
-    private data class Author(val id: Int, val name: String)
 }

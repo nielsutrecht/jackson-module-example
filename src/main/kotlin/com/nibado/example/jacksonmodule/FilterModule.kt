@@ -3,13 +3,13 @@ package com.nibado.example.jacksonmodule
 import com.fasterxml.jackson.core.Version
 import com.fasterxml.jackson.databind.Module
 
-class FilterModule(private val config: FilterConfig) : Module() {
+class FilterModule(private val config: FilterConfig, private val propertyFilterSupplier: PropertyFilterSupplier) : Module() {
     override fun version(): Version = VERSION
 
     override fun getModuleName() : String = NAME
 
     override fun setupModule(context: SetupContext) {
-        context.addBeanSerializerModifier(FilterPropertyModifier())
+        context.addBeanSerializerModifier(FilterPropertyModifier(propertyFilterSupplier))
     }
 
     companion object {
