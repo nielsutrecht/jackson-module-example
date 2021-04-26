@@ -2,6 +2,7 @@ package com.nibado.example.jacksonmodule
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.nibado.example.jacksonmodule.config.FilterConfigBuilder
 import org.junit.jupiter.api.Test
 
 internal class FilterModuleTest {
@@ -15,11 +16,13 @@ internal class FilterModuleTest {
     }
 
     private fun mapper() : ObjectMapper {
-        val lookup = mapOf(
-            FilterConfig.ClassProperty(Quote::class.java,"id") to FilterConfig.PropertyAuthorization("Quote", "id"),
-            FilterConfig.ClassProperty(Author::class.java,"id") to FilterConfig.PropertyAuthorization("Author", "id")
-        )
+        val config = FilterConfigBuilder().withScanForMappings("com.nibado.example.jacksonmodule")
+            .with("QuoteNew", Quote::quote, Quote::id, Quote::author)
+            .build()
+
+        config.lookup.forEach { println(it) }
+
         return ObjectMapper().registerKotlinModule()
-            .registerModule(FilterModule(FilterConfig(true, lookup), TestFilterSupplier()))
+            .registerModule(FilterModule(config, TestFilterSupplier()))
     }
 }
