@@ -50,7 +50,7 @@ internal class RequestContextFilterSupplierTest {
 
         assertThat(result).hasSize(3)
         assertThat(result).extracting("type").containsExactly("Quote", "Quote", "Author")
-        assertThat(result).extracting("property").containsExactly("author", "quote", "name")
+        assertThat(result).extracting("field").containsExactly("author", "quote", "name")
     }
 
     private fun mockRequest(header: String? = null) : HttpServletRequest {
