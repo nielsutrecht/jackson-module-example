@@ -1,10 +1,10 @@
 package com.nibado.example.jacksonmodule
 
 class FilterConfig(
-    val failOnMissingHeader: Boolean, val lookup: Map<ClassProperty, PropertyAuthorization>) {
+    val failOnMissingHeader: Boolean, val lookup: Map<ClassField, TypeField>) {
 
+    data class ClassField(val clazz: Class<*>, val field: String)
 
-    data class ClassProperty(val clazz: Class<*>, val property: String)
-
-    data class PropertyAuthorization(val type: String, val property: String)
+    fun authorization(clazz: Class<*>, field: String) : TypeField? =
+        lookup[ClassField(clazz, field)]
 }

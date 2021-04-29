@@ -37,8 +37,7 @@ internal class RequestContextFilterSupplierTest {
 
         val result = supplier.parseHeader(mockRequest("all"))
 
-        assertThat(result).hasSize(1)
-        assertThat(result.first()).isInstanceOf(AllowAllFilter::class.java)
+        assertThat(result).isEmpty()
     }
 
     @Test

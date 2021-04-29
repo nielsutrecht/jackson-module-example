@@ -1,17 +1,21 @@
 package com.nibado.example.jacksonmodule.config
 
 import com.nibado.example.jacksonmodule.FilterConfig
+import com.nibado.example.jacksonmodule.TypeField
 import com.nibado.example.jacksonmodule.annotations.OpaField
 import com.nibado.example.jacksonmodule.annotations.OpaType
+import mu.KotlinLogging
 import org.reflections.ReflectionUtils.getAllFields
 import org.reflections.ReflectionUtils.withAnnotation
 import org.reflections.Reflections
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaField
 
+private val log = KotlinLogging.logger {}
+
 class FilterConfigBuilder {
     private var failOnMissingHeader = true
-    private val mappings = mutableMapOf<FilterConfig.ClassProperty, FilterConfig.PropertyAuthorization>()
+    private val mappings = mutableMapOf<FilterConfig.ClassField, TypeField>()
 
     fun withFailOnMissingHeader(value: Boolean) : FilterConfigBuilder {
         failOnMissingHeader = value
@@ -24,7 +28,7 @@ class FilterConfigBuilder {
     }
 
     fun with(clazz: Class<*>, field: String, opaType: String, opaField: String) : FilterConfigBuilder {
-        mappings[FilterConfig.ClassProperty(clazz, field)] = FilterConfig.PropertyAuthorization(opaType, opaField)
+        mappings[FilterConfig.ClassField(clazz, field)] = TypeField(opaType, opaField)
 
         return this
     }
@@ -46,7 +50,7 @@ class FilterConfigBuilder {
     }
 
     companion object {
-        fun scan(basePackage: String) : Map<FilterConfig.ClassProperty, FilterConfig.PropertyAuthorization> {
+        fun scan(basePackage: String) : Map<FilterConfig.ClassField, TypeField> {
             val reflections = Reflections(basePackage)
 
             val annotatedClasses = reflections.getTypesAnnotatedWith(OpaType::class.java)
@@ -56,10 +60,12 @@ class FilterConfigBuilder {
 
                 val fields = getAllFields(c, withAnnotation(OpaField::class.java))
 
+                log.debug { "Found type ${c.name} with fields '${fields.joinToString(", ") { it.name }}'" }
+
                 fields
                     .map { field ->
                         val fieldName = field.getAnnotation(OpaField::class.java).field.let { if(it == "[default]") field.name else it}
-                        FilterConfig.ClassProperty(c, field.name) to FilterConfig.PropertyAuthorization(type, fieldName)
+                        FilterConfig.ClassField(c, field.name) to TypeField(type, fieldName)
                     }
             }.toMap()
         }

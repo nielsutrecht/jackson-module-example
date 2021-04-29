@@ -2,14 +2,18 @@ package com.nibado.example.jacksonmodule
 
 import com.fasterxml.jackson.core.Version
 import com.fasterxml.jackson.databind.Module
+import mu.KotlinLogging
 
-class FilterModule(private val config: FilterConfig, private val propertyFilterSupplier: PropertyFilterSupplier) : Module() {
+private val log = KotlinLogging.logger {}
+
+class FilterModule(private val config: FilterConfig, private val fieldFilterSupplier: FieldFilterSupplier) : Module() {
     override fun version(): Version = VERSION
 
     override fun getModuleName() : String = NAME
 
     override fun setupModule(context: SetupContext) {
-        context.addBeanSerializerModifier(FilterPropertyModifier(propertyFilterSupplier))
+        //context.addBeanSerializerModifier(FilterPropertyModifier(propertyFilterSupplier))
+        context.appendAnnotationIntrospector(FilterAnnotationIntrospector(config, fieldFilterSupplier))
     }
 
     companion object {

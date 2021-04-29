@@ -9,20 +9,26 @@ internal class FilterModuleTest {
 
     @Test
     fun test() {
-        val mapper = mapper()
+
         val testClass = Quote(1, Author(123, "Bruce Lee"), "Be water my friend")
+
+        val config = FilterConfigBuilder().withScanForMappings("com.nibado.example.jacksonmodule")
+            .build()
+
+        val filter = mutableSetOf(TypeField("Quote", "quote"), TypeField("Quote", "author"))
+        val mapper = mapper(config, filter)
+
+        println(mapper.writeValueAsString(testClass))
+
+        filter += TypeField("Author", "name")
 
         println(mapper.writeValueAsString(testClass))
     }
 
-    private fun mapper() : ObjectMapper {
-        val config = FilterConfigBuilder().withScanForMappings("com.nibado.example.jacksonmodule")
-            .with("QuoteNew", Quote::quote, Quote::id, Quote::author)
-            .build()
-
-        config.lookup.forEach { println(it) }
-
+    private fun mapper(config: FilterConfig, typeFields: Set<TypeField>): ObjectMapper {
         return ObjectMapper().registerKotlinModule()
-            .registerModule(FilterModule(config, TestFilterSupplier()))
+            .registerModule(
+                FilterModule(config, TestFilterSupplier(typeFields))
+            )
     }
 }

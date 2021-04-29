@@ -1,7 +1,5 @@
 package com.nibado.example.jacksonmodule
 
-class TestFilterSupplier : PropertyFilterSupplier {
-    override fun filters(): List<PropertyFilter> {
-        TODO("Not yet implemented")
-    }
+class TestFilterSupplier(val typeFields: Set<TypeField>) : FieldFilterSupplier {
+    override fun filters() = typeFields
 }

@@ -1,33 +1,40 @@
 package com.nibado.example.jacksonmodule
 
+import mu.KotlinLogging
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import javax.servlet.http.HttpServletRequest
 
-class RequestContextFilterSupplier(private val config: FilterConfig) : PropertyFilterSupplier {
-    override fun filters(): List<PropertyFilter>  = parseHeader(getHttpRequest())
+private val log = KotlinLogging.logger {}
 
-    internal fun parseHeader(request: HttpServletRequest) : List<PropertyFilter> {
+class RequestContextFilterSupplier(private val config: FilterConfig) : FieldFilterSupplier {
+    override fun filters(): Set<TypeField>  = parseHeader(getHttpRequest())
+
+    internal fun parseHeader(request: HttpServletRequest) : Set<TypeField> {
         val header = request.getHeader(HEADER_NAME)
             ?: if(config.failOnMissingHeader) {
+                log.error { "Missing $HEADER_NAME header" }
                 throw IllegalStateException("Missing $HEADER_NAME header")
             } else {
-                return emptyList()
+                log.debug { "$HEADER_NAME missing so allowing all types and fields." }
+                return emptySet()
             }
 
+        log.debug { "$HEADER_NAME: $header" }
+
         if(header.equals(RETURN_ALL, true)) {
-            return listOf(AllowAllFilter())
+            return emptySet()
         }
 
         return header.split(FILTER_SEPARATOR)
-            .map(::parseFilter)
+            .map(::parseFilter).toSet()
     }
 
-    private fun parseFilter(filter: String) : PropertyFilter {
+    private fun parseFilter(filter: String) : TypeField {
         val matcher = TYPE_PROPERTY_REGEX.matchEntire(filter)
             ?: throw IllegalStateException("Filter $filter does not match ${TYPE_PROPERTY_REGEX.pattern}")
 
-        return matcher.groupValues.let { (_, type, prop) -> ConfigLookupFilter(config, type, prop) }
+        return matcher.groupValues.let { (_, type, prop) -> TypeField(type, prop) }
     }
 
     private fun getHttpRequest() : HttpServletRequest {
