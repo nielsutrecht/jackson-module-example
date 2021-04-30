@@ -22,12 +22,20 @@ class RequestContextFilterSupplier(private val config: FilterConfig) : FieldFilt
 
         log.debug { "$HEADER_NAME: $header" }
 
-        if(header.equals(RETURN_ALL, true)) {
-            return emptySet()
+        if(header == WILDCARD) {
+            return config.all()
         }
 
-        return header.split(FILTER_SEPARATOR)
-            .map(::parseFilter).toSet()
+        return header.split(FILTER_SEPARATOR).asSequence()
+            .map(::parseFilter).flatMap(::expandWildCards).toSet()
+    }
+
+    private fun expandWildCards(typeField: TypeField) : Sequence<TypeField> {
+        return if(typeField.field == WILDCARD) {
+            config.allForType(typeField.type).asSequence()
+        } else {
+            sequenceOf(typeField)
+        }
     }
 
     private fun parseFilter(filter: String) : TypeField {
@@ -51,7 +59,7 @@ class RequestContextFilterSupplier(private val config: FilterConfig) : FieldFilt
     companion object {
         const val HEADER_NAME = "X-Return-Fields"
         private val FILTER_SEPARATOR = "\\s+".toRegex()
-        private val TYPE_PROPERTY_REGEX = "([A-Za-z0-9_]+):([A-Za-z0-9_]+)".toRegex()
-        private const val RETURN_ALL = "all"
+        private val TYPE_PROPERTY_REGEX = "([A-Za-z0-9_]+):([A-Za-z0-9_]+|\\*)".toRegex()
+        private const val WILDCARD = "*"
     }
 }
